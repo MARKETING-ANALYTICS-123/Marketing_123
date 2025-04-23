@@ -3,7 +3,7 @@ name: Execute Snowflake Code
 on:
   push:
     branches:
-      - main  # Change to 'prod' if you want it to run only on prod
+      - main
 
 jobs:
   run-snowflake:
@@ -20,12 +20,12 @@ jobs:
 
       - name: Execute SQL on Snowflake
         env:
-          SNOWFLAKE_ACCOUNT: ${{ secrets.RX58491}}
-          SNOWFLAKE_USER: ${{ secrets.ANKIT210203 }}
-          SNOWFLAKE_PASSWORD: ${{ secrets.G77QX8jFht9RuuM }}
-          SNOWFLAKE_DATABASE: ${{ secrets.Demo}}
-          SNOWFLAKE_SCHEMA: ${{ secrets.PUBLIC }}
-          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_LEARNING_WH}}
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}       # Value: RX58491.ap-south-1
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}             # Value: ANKIT210203
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}     # Value: G77QX8jFht9RuuM
+          SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}     # Value: DEMO
+          SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}         # Value: PUBLIC
+          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}   # Value: SNOWFLAKE_LEARNING_WH
         run: |
           python3 -c "
 import snowflake.connector
@@ -44,4 +44,3 @@ for stmt in sql_script.split(';'):
         conn.cursor().execute(stmt)
 conn.close()
 "
-
