@@ -1,1 +1,47 @@
+name: Execute Snowflake Code
+
+on:
+  push:
+    branches:
+      - main  # Change to 'prod' if you want it to run only on prod
+
+jobs:
+  run-snowflake:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install SnowSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          pip3 install snowflake-connector-python
+
+      - name: Execute SQL on Snowflake
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.RX58491}}
+          SNOWFLAKE_USER: ${{ secrets.ANKIT210203 }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.G77QX8jFht9RuuM }}
+          SNOWFLAKE_DATABASE: ${{ secrets.Demo}}
+          SNOWFLAKE_SCHEMA: ${{ secrets.PUBLIC }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_LEARNING_WH}}
+        run: |
+          python3 -c "
+import snowflake.connector
+conn = snowflake.connector.connect(
+    user='${{ secrets.SNOWFLAKE_USER }}',
+    password='${{ secrets.SNOWFLAKE_PASSWORD }}',
+    account='${{ secrets.SNOWFLAKE_ACCOUNT }}'
+)
+conn.cursor().execute('USE DATABASE ${{ secrets.SNOWFLAKE_DATABASE }}')
+conn.cursor().execute('USE SCHEMA ${{ secrets.SNOWFLAKE_SCHEMA }}')
+conn.cursor().execute('USE WAREHOUSE ${{ secrets.SNOWFLAKE_WAREHOUSE }}')
+with open('your_script.sql', 'r') as file:
+    sql_script = file.read()
+for stmt in sql_script.split(';'):
+    if stmt.strip():
+        conn.cursor().execute(stmt)
+conn.close()
+"
 
