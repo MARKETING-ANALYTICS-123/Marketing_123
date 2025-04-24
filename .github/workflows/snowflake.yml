@@ -31,7 +31,8 @@ jobs:
         run: |
           # Find the latest SQL file and execute it
           latest_sql_file=$(ls *.sql | sort -n | tail -n 1)
-          python3 -c "
+
+          python3 - <<EOF
 import os
 import snowflake.connector
 
@@ -60,4 +61,4 @@ except Exception as e:
 finally:
     if conn:
         conn.close()
-"
+EOF
