@@ -34,7 +34,7 @@ jobs:
 
           python3 - <<EOF
 import os
-import snowflake.connector
+
 
 try:
     conn = snowflake.connector.connect(
