@@ -1,0 +1,64 @@
+name: Execute Snowflake SQL Files
+
+on:
+  push:
+    paths:
+      - '**/*.sql'  # Jo bhi SQL file tu push karega, wo trigger hoga
+    branches:
+      - prod       # Ya jo bhi branch tu use kar raha hai (main ya prod)
+
+jobs:
+  run-snowflake:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install SnowSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          pip3 install snowflake-connector-python==3.0.3
+
+      - name: Execute SQL on Snowflake
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+          SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+        run: |
+          # Find the latest SQL file and execute it
+          latest_sql_file=$(ls *.sql | sort -n | tail -n 1)
+
+          python3 - <<EOF
+import os
+
+
+try:
+    conn = snowflake.connector.connect(
+        user=os.environ['SNOWFLAKE_USER'],
+        password=os.environ['SNOWFLAKE_PASSWORD'],
+        account=os.environ['SNOWFLAKE_ACCOUNT']
+    )
+    conn.cursor().execute(f'USE DATABASE {os.environ["SNOWFLAKE_DATABASE"]}')
+    conn.cursor().execute(f'USE SCHEMA {os.environ["SNOWFLAKE_SCHEMA"]}')
+    conn.cursor().execute(f'USE WAREHOUSE {os.environ["SNOWFLAKE_WAREHOUSE"]}')
+
+    with open(latest_sql_file, 'r') as file:
+        sql_script = file.read()
+
+    for stmt in sql_script.split(';'):
+        if stmt.strip():
+            conn.cursor().execute(stmt)
+
+    print('SQL execution completed successfully.')
+
+except Exception as e:
+    print(f'Error occurred: {e}')
+
+finally:
+    if conn:
+        conn.close()
+EOF
