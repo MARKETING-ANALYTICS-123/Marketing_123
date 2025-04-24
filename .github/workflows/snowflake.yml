@@ -1,9 +1,11 @@
-name: Execute Snowflake Code
+name: Execute Snowflake SQL Files
 
 on:
   push:
+    paths:
+      - '**/*.sql'  # Jo bhi SQL file tu push karega, wo trigger hoga
     branches:
-      - prod
+      - prod       # Ya jo bhi branch tu use kar raha hai (main ya prod)
 
 jobs:
   run-snowflake:
@@ -27,7 +29,9 @@ jobs:
           SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
           SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
         run: |
-          python3 run_sql.py
+          # Find the latest SQL file and execute it
+          latest_sql_file=$(ls *.sql | sort -n | tail -n 1)
+          python3 -c "
 import os
 import snowflake.connector
 
@@ -41,7 +45,7 @@ try:
     conn.cursor().execute(f'USE SCHEMA {os.environ["SNOWFLAKE_SCHEMA"]}')
     conn.cursor().execute(f'USE WAREHOUSE {os.environ["SNOWFLAKE_WAREHOUSE"]}')
 
-    with open('my_query3.sql', 'r') as file:
+    with open(latest_sql_file, 'r') as file:
         sql_script = file.read()
 
     for stmt in sql_script.split(';'):
@@ -49,8 +53,11 @@ try:
             conn.cursor().execute(stmt)
 
     print('SQL execution completed successfully.')
+
 except Exception as e:
     print(f'Error occurred: {e}')
+
 finally:
-    conn.close()
+    if conn:
+        conn.close()
 "
